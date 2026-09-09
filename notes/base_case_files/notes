@@ -1,0 +1,6 @@
+CESM2.1.3, by3 resolution, 
+box model atm,                              ./xmlchange --file env_run.xml --id OCN_CO2_TYPE --val box_atm_co2
+DOMr_reminR_photo=1/80 yr,                  marbl_settings_mod.F90
+kappa_isop*2.5                              (hmix_gm_modified.F90)
+parm_scalelen_vals = 0.8, 2.8, 3.6,, 3.8    user_nl_marbl
+ladjust_bury_coeff = .true.,                user_nl_marbl
