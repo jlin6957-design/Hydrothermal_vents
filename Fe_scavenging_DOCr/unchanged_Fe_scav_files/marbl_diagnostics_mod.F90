@@ -1966,6 +1966,18 @@ contains
         return
       end if
 
+      lname = 'DOC Scavenged by Fe Flux'
+      sname = 'FeScavDOCr'
+      units = 'nmol/cm^2/s'
+      vgrid = 'layer_avg'
+      truncate = .false.
+      call diags%add_diagnostic(lname, sname, units, vgrid, truncate,     &
+           ind%FeScavDOCr, marbl_status_log)
+      if (marbl_status_log%labort_marbl) then
+        call marbl_logging_add_diagnostics_error(marbl_status_log, sname, subname)
+        return
+      end if
+
       ! Particulate 2D diags
 
       write(particulate_flux_ref_depth_str, "(I0,A)") particulate_flux_ref_depth, 'm'
@@ -3051,7 +3063,8 @@ contains
     associate( POC     => marbl_particulate_share%POC, &
                P_CaCO3 => marbl_particulate_share%P_CaCO3 )
     call store_diagnostics_carbon_fluxes(domain, POC, P_CaCO3, interior_tendencies, &
-         marbl_tracer_indices, marbl_interior_tendency_diags, marbl_status_log)
+         marbl_tracer_indices, marbl_interior_tendency_diags, marbl_status_log), &
+         interior_tendency_forcings(interior_tendency_forcing_ind%FeScavDOCr_id)%field_1d(1,:))
     if (marbl_status_log%labort_marbl) then
       call marbl_status_log%log_error_trace('store_diagnostics_carbon_fluxes', subname)
       return
@@ -3953,7 +3966,7 @@ contains
   !***********************************************************************
 
   subroutine store_diagnostics_carbon_fluxes(marbl_domain, POC, P_CaCO3, interior_tendencies, &
-             marbl_tracer_indices, marbl_diags, marbl_status_log)
+             marbl_tracer_indices, marbl_diags, marbl_status_log, FeScavDOCr)
 
     use marbl_settings_mod, only : Jint_Ctot_thres
 
@@ -3964,6 +3977,7 @@ contains
     type(marbl_tracer_index_type)      , intent(in)    :: marbl_tracer_indices
     type(marbl_diagnostics_type)       , intent(inout) :: marbl_diags
     type(marbl_log_type)               , intent(inout) :: marbl_status_log
+    real(r8)                           , intent(in)    :: FeScavDOCr(:)          ! km
 
     !-----------------------------------------------------------------------
     !  local variables
@@ -3986,6 +4000,7 @@ contains
          docr_ind => marbl_tracer_indices%docr_ind &
          )
 
+    diags(ind%FeScavDOCr)%field_3d(:,1) = FeScavDOCr(:)
     ! vertical integrals
     work = interior_tendencies(dic_ind,:) + interior_tendencies(doc_ind,:) +             &
          interior_tendencies(docr_ind,:) +                                               &
@@ -4001,7 +4016,7 @@ contains
 
     call marbl_diagnostics_share_compute_vertical_integrals(work, delta_z, kmt, &
          full_depth_integral=diags(ind%Jint_Ctot)%field_2d(1),                  &
-         integrated_terms = POC%sed_loss + P_CaCO3%sed_loss)
+         integrated_terms = POC%sed_loss + P_CaCO3%sed_loss + FeScavDOCr)
 
     if (abs(diags(ind%Jint_Ctot)%field_2d(1)) .gt. Jint_Ctot_thres) then
        write(log_message,"(A,E11.3e3,A,E11.3e3)") &
