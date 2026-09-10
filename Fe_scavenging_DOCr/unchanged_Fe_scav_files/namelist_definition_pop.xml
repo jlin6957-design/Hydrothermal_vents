@@ -6135,6 +6135,47 @@ Default: none provided
 </entry>
 
 <entry
+id="fescavdocr_input%filename"
+type="char*256"
+category="Forcing (Ecosystem)"
+group="ecosys_forcing_data_nml"
+input_pathname="abs" >
+Default: docventFeScavsink_46_3Tg_yr_gx3v7_2026_3Dcells.nc
+</entry>
+	
+<entry
+id="fescavdocr_input%file_varname"
+type="char*256"
+category="Forcing (Ecosystem)"
+group="ecosys_forcing_data_nml" >
+Default: 'FeScavDOCr'
+</entry>
+	
+<entry
+id="fescavdocr_input%file_fmt"
+type="char*256"
+category="Forcing (Ecosystem)"
+group="ecosys_forcing_data_nml" >
+Default: 'nc'
+</entry>
+	
+<entry
+id="fescavdocr_input%scale_factor"
+type="real"
+category="Forcing (Ecosystem)"
+group="ecosys_forcing_data_nml" >
+Default: 1.1574e-6
+</entry>
+	
+<entry
+id="fescavdocr_input%default_val"
+type="real"
+category="Forcing (Ecosystem)"
+group="ecosys_forcing_data_nml" >
+Default: none provided
+</entry>
+	
+<entry
 id="o2_consumption_scalef_opt"
 type="char*256"
 category="Forcing (Ecosystem)"
