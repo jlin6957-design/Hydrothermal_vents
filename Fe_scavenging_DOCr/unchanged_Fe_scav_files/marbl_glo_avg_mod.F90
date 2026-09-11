@@ -8,6 +8,7 @@ module marbl_glo_avg_mod
   public
 
   integer (int_kind) :: glo_avg_field_ind_interior_tendency_CaCO3_bury = 0
+  integer (int_kind) :: glo_avg_field_ind_interior_tendency_DOCr_scav_bury = 0
   integer (int_kind) :: glo_avg_field_ind_interior_tendency_POC_bury = 0
   integer (int_kind) :: glo_avg_field_ind_interior_tendency_POP_bury = 0
   integer (int_kind) :: glo_avg_field_ind_interior_tendency_bSi_bury = 0
@@ -48,6 +49,9 @@ contains
     if (ladjust_bury_coeff) then
        glo_avg_field_cnt_interior_tendency = glo_avg_field_cnt_interior_tendency + 1
        glo_avg_field_ind_interior_tendency_CaCO3_bury = glo_avg_field_cnt_interior_tendency
+
+       glo_avg_field_cnt_interior_tendency = glo_avg_field_cnt_interior_tendency + 1
+       glo_avg_field_ind_interior_tendency_DOCr_scav_bury = glo_avg_field_cnt_interior_tendency
 
        glo_avg_field_cnt_interior_tendency = glo_avg_field_cnt_interior_tendency + 1
        glo_avg_field_ind_interior_tendency_POC_bury = glo_avg_field_cnt_interior_tendency
@@ -117,6 +121,7 @@ contains
     real (r8)          :: bury_coeff_rmean_timescale_sec
 
     real (r8) :: rmean_CaCO3_bury_integral
+    real (r8) :: rmean_DOCr_scav_bury_integral
     real (r8) :: rmean_C_input_integral
     real (r8) :: rmean_P_input_integral
     real (r8) :: rmean_Si_input_integral
@@ -155,11 +160,17 @@ contains
 
 !      rmean_ALK_nonN_input_integral = 1.62e-4_r8 ! GNEWS2000 value on gx1v6 grid [neq/cm^2/s]
        rmean_CaCO3_bury_integral     = 1.62e-4_r8 ! matches rmean_ALK_nonN_input_integral
+       ! Case-specific FeScavDOCr is supplied by the model forcing. The generic
+       ! settings-file initialization starts at zero; the running mean is then
+       ! updated from the actual globally averaged FeScavDOCr burial flux.
+       rmean_DOCr_scav_bury_integral = 0.0_r8    ! [nmol C/cm^2/s]
        rmean_C_input_integral        = 2.69e-4_r8 ! GNEWS2000 value on gx1v6 grid [nmol C/cm^2/s]
        rmean_P_input_integral        = 9.66e-7_r8 ! GNEWS2000 value on gx1v6 grid [nmol P/cm^2/s]
        rmean_Si_input_integral       = 4.10e-5_r8 ! GNEWS2000 value on gx1v6 grid [nmol Si/cm^2/s]
 
-       rmean_POC_bury_integral = (rmean_C_input_integral - rmean_CaCO3_bury_integral)
+       ! Carbon balance used to initialize the adjustable POC burial term:
+       ! POC_bury + CaCO3_bury + DOCr_scav_bury - C_input = 0
+       rmean_POC_bury_integral = (rmean_C_input_integral - rmean_CaCO3_bury_integral - rmean_DOCr_scav_bury_integral)
        rmean_d_POC_bury_d_bury_coeff_integral = rmean_POC_bury_integral / parm_init_POC_bury_coeff
 
        rmean_POP_bury_integral = rmean_P_input_integral
@@ -172,6 +183,10 @@ contains
        glo_ind = glo_avg_field_ind_interior_tendency_CaCO3_bury
        glo_avg_rmean_interior(glo_ind)%sname    = 'MARBL_rmean_glo_avg_CaCO3_bury'
        glo_avg_rmean_interior(glo_ind)%init_val = rmean_CaCO3_bury_integral
+
+       glo_ind = glo_avg_field_ind_interior_tendency_DOCr_scav_bury
+       glo_avg_rmean_interior(glo_ind)%sname    = 'MARBL_rmean_glo_avg_DOCr_scav_bury'
+       glo_avg_rmean_interior(glo_ind)%init_val = rmean_DOCr_scav_bury_integral
 
        glo_ind = glo_avg_field_ind_interior_tendency_POC_bury
        glo_avg_rmean_interior(glo_ind)%sname    = 'MARBL_rmean_glo_avg_POC_bury'
