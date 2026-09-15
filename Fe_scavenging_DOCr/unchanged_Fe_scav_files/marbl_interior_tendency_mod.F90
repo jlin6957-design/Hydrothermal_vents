@@ -230,6 +230,7 @@ contains
          pressure            => interior_tendency_forcings(interior_tendency_forcing_indices%pressure_id)%field_1d(1,:), &
          salinity            => interior_tendency_forcings(interior_tendency_forcing_indices%salinity_id)%field_1d(1,:), &
          fesedflux           => interior_tendency_forcings(interior_tendency_forcing_indices%fesedflux_id)%field_1d(1,:),&
+         FeScavDOCr           => interior_tendency_forcings(interior_tendency_forcing_indices%FeScavDOCr_id)%field_1d(1,:),&
 
          po4_ind           => marbl_tracer_indices%po4_ind,         &
          no3_ind           => marbl_tracer_indices%no3_ind,         &
@@ -339,9 +340,10 @@ contains
 
     call compute_routing(km, zooplankton_derived_terms, autotroph_derived_terms)
 
-    call compute_dissolved_organic_matter (km, marbl_tracer_indices, num_PAR_subcols, &
+    call compute_dissolved_organic_matter (km, mnt, marbl_tracer_indices, num_PAR_subcols, &
          PAR, zooplankton_derived_terms, autotroph_derived_terms,   &
-         delta_z1, tracer_local(:, :), dissolved_organic_matter)
+         delta_z1, tracer_local(:, :), FeScavDOCr, &
+         glo_avg_fields_interior_tendency, dissolved_organic_matter)
 
     do k = 1, km
 
@@ -404,7 +406,7 @@ contains
          tracer_local(:,:), &
          o2_consumption_scalef(:), &
          o2_production(:), o2_consumption(:), &
-         interior_tendencies(:,:))
+         interior_tendencies(:,:), FeScavDOCr, domain%delta_z(:))
 
     ! Compute interior diagnostics
     call marbl_diagnostics_interior_tendency_compute(       &
@@ -609,6 +611,7 @@ contains
        glo_scalar_rmean_interior_tendency, glo_scalar_interior_tendency)
 
     use marbl_glo_avg_mod, only : glo_avg_field_ind_interior_tendency_CaCO3_bury
+    use marbl_glo_avg_mod, only : glo_avg_field_ind_interior_tendency_DOCr_scav_bury
     use marbl_glo_avg_mod, only : glo_avg_field_ind_interior_tendency_POC_bury
     use marbl_glo_avg_mod, only : glo_avg_field_ind_interior_tendency_POP_bury
     use marbl_glo_avg_mod, only : glo_avg_field_ind_interior_tendency_bSi_bury
@@ -638,6 +641,7 @@ contains
          bSi_bury_coeff => marbl_particulate_share%bSi_bury_coeff, &
 
          rmean_CaCO3_bury_avg => glo_avg_rmean_interior_tendency(glo_avg_field_ind_interior_tendency_CaCO3_bury)%rmean, &
+         rmean_DOCr_scav_bury_avg => glo_avg_rmean_interior_tendency(glo_avg_field_ind_interior_tendency_DOCr_scav_bury)%rmean, &
          rmean_POC_bury_avg   => glo_avg_rmean_interior_tendency(glo_avg_field_ind_interior_tendency_POC_bury)%rmean, &
          rmean_POP_bury_avg   => glo_avg_rmean_interior_tendency(glo_avg_field_ind_interior_tendency_POP_bury)%rmean, &
          rmean_bSi_bury_avg   => glo_avg_rmean_interior_tendency(glo_avg_field_ind_interior_tendency_bSi_bury)%rmean, &
@@ -661,9 +665,12 @@ contains
               glo_scalar_rmean_interior_tendency(glo_scalar_ind_interior_tendency_bSi_bury_coeff)%rmean &
     )
 
-      ! Newton's method for POC_bury(coeff) + CaCO3_bury - C_input = 0
+      ! Newton's method for POC_bury(coeff) + CaCO3_bury + DOCr_scav_bury - C_input = 0
+      ! DOCr_scav_bury is a fixed carbon loss and does not depend on 
+      ! POC_bury_coeff, so it enters the numerator but not the derivative.
       POC_bury_coeff = rmean_POC_bury_coeff &
-                     - (rmean_POC_bury_avg + rmean_CaCO3_bury_avg - rmean_C_input_avg) &
+                     - (rmean_POC_bury_avg + rmean_CaCO3_bury_avg & 
+                     + rmean_DOCr_scav_bury_avg - rmean_C_input_avg) &
                      / rmean_POC_bury_deriv_avg
 
       ! Newton's method for POP_bury(coeff) - P_input = 0
@@ -2010,10 +2017,11 @@ contains
 
   !***********************************************************************
 
-  subroutine compute_dissolved_organic_matter (km, marbl_tracer_indices, &
+  subroutine compute_dissolved_organic_matter (km, kmt, marbl_tracer_indices, &
              PAR_nsubcols, PAR, &
              zooplankton_derived_terms, autotroph_derived_terms, &
-             dz1, tracer_local, dissolved_organic_matter)
+             dz1, tracer_local, FeScavDOCr, &
+             glo_avg_fields_interior_tendency, dissolved_organic_matter)
 
     use marbl_settings_mod, only : Q
     use marbl_settings_mod, only : DOC_reminR_light
@@ -2026,8 +2034,10 @@ contains
     use marbl_settings_mod, only : DONr_reminR0
     use marbl_settings_mod, only : DOPr_reminR0
     use marbl_settings_mod, only : DOMr_reminR_photo
+    use marbl_glo_avg_mod, only : glo_avg_field_ind_interior_tendency_DOCr_scav_bury
 
     integer(int_kind),                    intent(in)    :: km
+    integer(int_kind),                    intent(in)    :: kmt
     type(marbl_tracer_index_type),        intent(in)    :: marbl_tracer_indices
     integer(int_kind),                    intent(in)    :: PAR_nsubcols
     type(marbl_PAR_type),                 intent(in)    :: PAR
@@ -2035,6 +2045,8 @@ contains
     type(autotroph_derived_terms_type),   intent(in)    :: autotroph_derived_terms
     real(r8),                             intent(in)    :: dz1
     real(r8),                             intent(in)    :: tracer_local(marbl_tracer_indices%total_cnt,km)
+    real(r8),                             intent(in)    :: FeScavDOCr(km)
+    real(r8),                             intent(inout) :: glo_avg_fields_interior_tendency(:)
     type(dissolved_organic_matter_type),  intent(inout) :: dissolved_organic_matter
 
     !-----------------------------------------------------------------------
@@ -2089,6 +2101,25 @@ contains
       DON_prod(:) = Q * DOC_prod(:) * f_toDON
       DOP_prod(:) = Qp_zoo * (sum(zoo_loss_doc(:,:), dim=1) + sum(zoo_graze_doc(:,:), dim=1)) &
                   + sum(remaining_P_dop(:,:), dim=1)
+
+      !-----------------------------------------------------------------------
+      !  Fixed DOCr loss caused by hydrothermal Fe scavenging.
+      !
+      !  FeScavDOCr is an areal flux prescribed at one or more depths in the
+      !  water column. For the global carbon burial adjustment we need the
+      !  column-integrated areal loss, not the volume tendency FeScavDOCr/dz.
+      !  This term is treated as permanent burial of the scavenged DOCr.
+      !-----------------------------------------------------------------------
+      if (ladjust_bury_coeff) then
+         glo_avg_fields_interior_tendency( &
+              glo_avg_field_ind_interior_tendency_DOCr_scav_bury) = c0
+
+         if (kmt > 0) then
+            glo_avg_fields_interior_tendency( &
+                 glo_avg_field_ind_interior_tendency_DOCr_scav_bury) = &
+                 sum(FeScavDOCr(1:kmt))
+         endif
+      endif
 
       do k=1, km
         !-----------------------------------------------------------------------
@@ -3376,12 +3407,15 @@ contains
     real(r8),                             intent(out)   :: o2_production(km)
     real(r8),                             intent(out)   :: o2_consumption(km)
     real(r8),                             intent(inout) :: interior_tendencies(marbl_tracer_indices%total_cnt, km)
+    real(r8),                             intent(in)    :: FeScavDOCr(km)
+    real(r8),                             intent(in)    :: delta_z(km)       ! layer thickness (cm)
 
     !-----------------------------------------------------------------------
     !  local variables
     !-----------------------------------------------------------------------
     integer  :: k, auto_ind, zoo_ind, n
     real(r8) :: auto_sum
+    real(r8) :: dz_loc, dzr_loc
     !-----------------------------------------------------------------------
 
     associate(                                                            &
@@ -3452,6 +3486,8 @@ contains
          )
 
       do k=1, km
+              dz_loc = delta_z(k)
+              dzr_loc = c1 / dz_loc
         !-----------------------------------------------------------------------
         !  nitrate & ammonium
         !-----------------------------------------------------------------------
@@ -3561,11 +3597,14 @@ contains
         !-----------------------------------------------------------------------
         !  dissolved organic Matter
         !  from sinking remin small fraction to refractory pool
+        ! FeScavDOCr is an areal removal flux in nmol C cm^-2 s^-1. Multiplying by dzr_loc (1/cm) gives 
+        ! nmol C cm^-3 s^-1, numerically equivalent to mmol C m^-3 s^-1.
         !-----------------------------------------------------------------------
 
         interior_tendencies(doc_ind,k) = DOC_prod(k) * (c1 - DOCprod_refract) - DOC_remin(k)
 
-        interior_tendencies(docr_ind,k) = DOC_prod(k) * DOCprod_refract - DOCr_remin(k) + (POC_remin(k) * POCremin_refract)
+        interior_tendencies(docr_ind,k) = DOC_prod(k) * DOCprod_refract - DOCr_remin(k) + (POC_remin(k) * POCremin_refract) &
+                                      - FeScavDOCr(k) * dzr_loc
 
         interior_tendencies(don_ind,k) = (DON_prod(k) * (c1 - DONprod_refract)) - DON_remin(k)
 
