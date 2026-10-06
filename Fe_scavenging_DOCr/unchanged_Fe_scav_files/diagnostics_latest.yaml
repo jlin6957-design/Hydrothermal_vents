@@ -164,7 +164,7 @@ DUST_FLUX :
    longname : Dust Flux # Should be "Atmospheric Dust Flux?"
    units : g/cm^2/s
    vertical_grid : none
-   frequency : never
+   frequency : medium
    operator : average
 NOx_FLUX :
    longname : Flux of NOx from Atmosphere
@@ -251,7 +251,7 @@ CISO_eps_aq_g_surf :
    longname : Surface equilibrium fractionation (CO2_gaseous <-> CO2_aq)
    units : permil
    vertical_grid : none
-   frequency : never
+   frequency : medium
    operator : average
 CISO_eps_dic_g_surf :
    dependencies :
@@ -259,7 +259,7 @@ CISO_eps_dic_g_surf :
    longname : Surface equilibrium fractionation between total DIC and gaseous CO2
    units : permil
    vertical_grid : none
-   frequency : never
+   frequency : medium
    operator : average
 CISO_FG_14CO2 :
    dependencies :
@@ -446,7 +446,7 @@ calcToFloor :
    longname : CaCO3 Flux Hitting Sea Floor
    units : nmol/cm^2/s
    vertical_grid : none
-   frequency : never
+   frequency : medium
    operator : average
 calcToSed :
    longname : CaCO3 Flux to Sediments
@@ -464,7 +464,7 @@ pocToFloor :
    longname : POC Flux Hitting Sea Floor
    units : nmol/cm^2/s
    vertical_grid : none
-   frequency : never
+   frequency : medium
    operator : average
 pocToSed :
    longname : POC Flux to Sediments
@@ -488,7 +488,7 @@ OtherRemin :
    longname : non-oxic,non-dentr remin in Sediments
    units : nmol/cm^2/s
    vertical_grid : none
-   frequency : never
+   frequency : medium
    operator : average
 popToSed :
    longname : phosphorus Flux to Sediments
@@ -670,13 +670,13 @@ DOC_remin :
    longname : DOC Remineralization
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 DOCr_remin :
    longname : DOCr Remineralization
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 DON_prod :
    longname : DON Production
@@ -688,13 +688,13 @@ DON_remin :
    longname : DON Remineralization
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 DONr_remin :
    longname : DONr Remineralization
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 DOP_prod :
    longname : DOP Production
@@ -706,13 +706,13 @@ DOP_remin :
    longname : DOP Remineralization
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 DOPr_remin :
    longname : DOPr Remineralization
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 DOP_loss_P_bal :
    longname : DOP loss, due to P budget balancing
@@ -772,7 +772,14 @@ FESEDFLUX :
    longname : Iron Sediment Flux
    units : nmol/cm^2/s
    vertical_grid : layer_avg
-   frequency : never
+   frequency : medium
+   operator : average
+
+FeScavDOCr :
+   longname : Hydrothermal Fe-Scavenged Refractory DOC Sink Flux
+   units : nmol DOC/cm^2/s
+   vertical_grid : layer_avg
+   frequency : medium
    operator : average
 
 # Particulate 2D diags
@@ -904,13 +911,13 @@ POC_REMIN_DOCr :
    longname : POC Remineralization routed to DOCr
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 POC_REMIN_DIC :
    longname : POC Remineralization routed to DIC
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : low
+   frequency : medium
    operator : average
 POP_FLUX_IN :
    longname : POP Flux into Cell
@@ -1048,7 +1055,7 @@ Nfix :
    longname : Total N Fixation
    units : mmol/m^3/s
    vertical_grid : layer_avg
-   frequency : never
+   frequency : medium
    operator : average
 
 ###############
@@ -1623,42 +1630,42 @@ graze_((autotroph_sname))_poc :
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 graze_((autotroph_sname))_doc :
    longname : ((autotroph_lname)) Grazing to DOC
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 graze_((autotroph_sname))_zoo :
    longname : ((autotroph_lname)) Grazing to ZOO
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((autotroph_sname))_loss :
    longname : ((autotroph_lname)) Loss
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((autotroph_sname))_loss_poc :
    longname : ((autotroph_lname)) Loss to POC
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((autotroph_sname))_loss_doc :
    longname : ((autotroph_lname)) Loss to DOC
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((autotroph_sname))_agg :
    longname : ((autotroph_lname)) Aggregate
@@ -1674,7 +1681,7 @@ graze_((autotroph_sname))_zoo :
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((autotroph_sname))_CaCO3_form :
    dependencies :
@@ -1683,7 +1690,7 @@ graze_((autotroph_sname))_zoo :
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((autotroph_sname))_Nfix :
    dependencies :
@@ -1925,21 +1932,21 @@ x_graze_((zooplankton_sname))_zint_100m :
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((zooplankton_sname))_loss_poc :
    longname : ((zooplankton_lname)) Loss to POC
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 ((zooplankton_sname))_loss_doc :
    longname : ((zooplankton_lname)) Loss to DOC
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 graze_((zooplankton_sname)) :
    longname : ((zooplankton_lname)) grazing loss
@@ -1953,21 +1960,21 @@ graze_((zooplankton_sname))_poc :
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 graze_((zooplankton_sname))_doc :
    longname : ((zooplankton_lname)) grazing loss to DOC
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 graze_((zooplankton_sname))_zoo :
    longname : ((zooplankton_lname)) grazing loss to ZOO
    units : mmol/m^3/s
    vertical_grid : layer_avg
    truncate : true
-   frequency : never
+   frequency : medium
    operator : average
 x_graze_((zooplankton_sname)) :
    longname : ((zooplankton_lname)) grazing gain
