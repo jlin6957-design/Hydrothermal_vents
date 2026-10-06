@@ -230,6 +230,8 @@ contains
          pressure            => interior_tendency_forcings(interior_tendency_forcing_indices%pressure_id)%field_1d(1,:), &
          salinity            => interior_tendency_forcings(interior_tendency_forcing_indices%salinity_id)%field_1d(1,:), &
          fesedflux           => interior_tendency_forcings(interior_tendency_forcing_indices%fesedflux_id)%field_1d(1,:),&
+         docventflux           => interior_tendency_forcings(interior_tendency_forcing_indices%docventflux_id)%field_1d(1,:),&
+         docventfluxrm           => interior_tendency_forcings(interior_tendency_forcing_indices%docventfluxrm_id)%field_1d(1,:),&
 
          po4_ind           => marbl_tracer_indices%po4_ind,         &
          no3_ind           => marbl_tracer_indices%no3_ind,         &
@@ -404,7 +406,7 @@ contains
          tracer_local(:,:), &
          o2_consumption_scalef(:), &
          o2_production(:), o2_consumption(:), &
-         interior_tendencies(:,:))
+         interior_tendencies(:,:), docventflux, docventfluxrm, domain%delta_z)
 
     ! Compute interior diagnostics
     call marbl_diagnostics_interior_tendency_compute(       &
@@ -3350,7 +3352,7 @@ contains
        zooplankton_derived_terms, dissolved_organic_matter, nitrif, denitrif, sed_denitrif, &
        Fe_scavenge, Lig_prod, Lig_loss, P_iron_remin, POC_remin, POP_remin, P_SiO2_remin, &
        P_CaCO3_remin, P_CaCO3_ALT_CO2_remin, other_remin, PON_remin, tracer_local, &
-       o2_consumption_scalef, o2_production, o2_consumption, interior_tendencies)
+       o2_consumption_scalef, o2_production, o2_consumption, interior_tendencies, docventflux, docventfluxrm, delta_z)
 
     integer,                              intent(in)    :: km
     type(marbl_tracer_index_type),        intent(in)    :: marbl_tracer_indices
@@ -3376,12 +3378,16 @@ contains
     real(r8),                             intent(out)   :: o2_production(km)
     real(r8),                             intent(out)   :: o2_consumption(km)
     real(r8),                             intent(inout) :: interior_tendencies(marbl_tracer_indices%total_cnt, km)
+    real(r8),                             intent(in)    :: docventflux(km)
+    real(r8),                             intent(in)    :: docventfluxrm(km)
+    real(r8),                             intent(in)    :: delta_z(km)
 
     !-----------------------------------------------------------------------
     !  local variables
     !-----------------------------------------------------------------------
     integer  :: k, auto_ind, zoo_ind, n
     real(r8) :: auto_sum
+    real(r8) :: dz_loc, dzr_loc
     !-----------------------------------------------------------------------
 
     associate(                                                            &
@@ -3452,6 +3458,10 @@ contains
          )
 
       do k=1, km
+      
+              dz_loc = delta_z(k)
+              dzr_loc = c1 / dz_loc
+
         !-----------------------------------------------------------------------
         !  nitrate & ammonium
         !-----------------------------------------------------------------------
@@ -3561,11 +3571,16 @@ contains
         !-----------------------------------------------------------------------
         !  dissolved organic Matter
         !  from sinking remin small fraction to refractory pool
+        !  docventfluxrm (mmol/m^2/sec) / dz thickness of grid cell = mmol/m^3/sec: flux to tendency
+        !  subtracted from DOCR
+        !  docventflux (mmol/m^2/sec) / dz thickness of grid cell = mmol/m^3/sec: flux to tendency
+        !  add 90% to SLDOC and 10% to RDOC
         !-----------------------------------------------------------------------
 
-        interior_tendencies(doc_ind,k) = DOC_prod(k) * (c1 - DOCprod_refract) - DOC_remin(k)
+        interior_tendencies(doc_ind,k) = DOC_prod(k) * (c1 - DOCprod_refract) - DOC_remin(k) + docventflux(k) * dzr_loc * 0.9_r8
 
-        interior_tendencies(docr_ind,k) = DOC_prod(k) * DOCprod_refract - DOCr_remin(k) + (POC_remin(k) * POCremin_refract)
+        interior_tendencies(docr_ind,k) = DOC_prod(k) * DOCprod_refract - DOCr_remin(k) + (POC_remin(k) * POCremin_refract) &
+                                          - docventfluxrm(k) * dzr_loc + docventflux(k) * dzr_loc * 0.1_r8
 
         interior_tendencies(don_ind,k) = (DON_prod(k) * (c1 - DONprod_refract)) - DON_remin(k)
 
@@ -3584,7 +3599,7 @@ contains
 
         interior_tendencies(dic_ind,k) = sum(auto_loss_dic(:,k)) + sum(auto_graze_dic(:,k)) - sum(photoC(:,k)) &
                                        + DOC_remin(k) + POC_remin(k) * (c1 - POCremin_refract) + sum(zoo_loss_dic(:,k)) &
-                                       + sum(zoo_graze_dic(:,k)) + P_CaCO3_remin(k) + DOCr_remin(k)
+                                       + sum(zoo_graze_dic(:,k)) + P_CaCO3_remin(k) + DOCr_remin(k) + docventfluxrm(k) * dzr_loc
 
         do auto_ind = 1, autotroph_cnt
           if (marbl_tracer_indices%auto_inds(auto_ind)%CaCO3_ind > 0) then
