@@ -405,6 +405,8 @@ module marbl_interface_private_types
      integer(int_kind) :: salinity_id    = 0
      integer(int_kind) :: pressure_id    = 0
      integer(int_kind) :: fesedflux_id   = 0
+     integer(int_kind) :: docventfluxrm_id   = 0
+     integer(int_kind) :: docventflux_id   = 0
      integer(int_kind) :: o2_consumption_scalef_id = 0
      integer(int_kind) :: p_remin_scalef_id = 0
 
@@ -616,6 +618,8 @@ module marbl_interface_private_types
     integer(int_kind) :: Lig_photochem
     integer(int_kind) :: Lig_deg
     integer(int_kind) :: fesedflux
+    integer(int_kind) :: docventfluxrm
+    integer(int_kind) :: docventflux
 
     ! Particulate 2D diags
     integer(int_kind) :: POC_FLUX_at_ref_depth
@@ -1755,6 +1759,14 @@ contains
       ! Iron Sediment Flux
       forcing_cnt = forcing_cnt + 1
       this%fesedflux_id = forcing_cnt
+
+      ! DOC Vent Removal Flux
+      forcing_cnt = forcing_cnt + 1
+      this%docventfluxrm_id = forcing_cnt
+      
+      ! DOC Vent Flux
+      forcing_cnt = forcing_cnt + 1
+      this%docventflux_id = forcing_cnt
 
       ! O2 Consumption Scale Factor
       if (lo2_consumption_scalef) then
