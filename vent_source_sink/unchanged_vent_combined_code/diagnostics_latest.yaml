@@ -775,6 +775,19 @@ FESEDFLUX :
    frequency : never
    operator : average
 
+DOCVENTFLUXRM :
+   longname : DOC Vent Flux Removed
+   units : nmol/cm^2/s
+   vertical_grid : layer_avg
+   frequency : medium
+   operator : average
+DOCVENTFLUX :
+   longname : DOC Vent Flux
+   units : nmol/cm^2/s
+   vertical_grid : layer_avg
+   frequency : medium
+   operator : average
+
 # Particulate 2D diags
 POC_FLUX_((particulate_flux_ref_depth_str)) :
    longname : POC Flux at ((particulate_flux_ref_depth_str))
